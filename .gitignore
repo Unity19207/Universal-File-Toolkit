@@ -1,0 +1,13 @@
+# Ignore all dotfiles/folders
+.*
+
+# Except
+!.gitignore
+
+# Common ignores
+node_modules/
+dist*/
+build/
+*.log
+*.err
+.env*

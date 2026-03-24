@@ -2916,3 +2916,433 @@ html.dark .hero-grid-bg::after {
   padding: 0;
   box-shadow: none;
 }
+
+/* ═══════════════════════════════════════════
+   ANIMATION SYSTEM — PRECISION MOTION
+   ═══════════════════════════════════════════ */
+
+/* ── Core Keyframes ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(220%) skewX(-12deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%       { opacity: 0.55; transform: scale(1.08); }
+}
+
+@keyframes orb-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(30px, -20px) scale(1.05); }
+  66%  { transform: translate(-20px, 15px) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes dot-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes border-trace {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes stat-pop {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.9); }
+  70%  { transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes chip-slide {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes progress-scan {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Navbar animation ── */
+.navbar {
+  animation: slide-down 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Hero: animated glow orbs ── */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(60px);
+}
+
+.hero-orb-1 {
+  width: 420px;
+  height: 420px;
+  top: -100px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(232, 97, 58, 0.18) 0%, transparent 70%);
+  animation: orb-drift 12s ease-in-out infinite, glow-pulse 6s ease-in-out infinite;
+}
+
+.hero-orb-2 {
+  width: 280px;
+  height: 280px;
+  bottom: -60px;
+  left: 30%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+  animation: orb-drift 16s ease-in-out infinite reverse, glow-pulse 8s ease-in-out infinite;
+  animation-delay: -3s;
+}
+
+html.dark .hero-orb-1 {
+  background: radial-gradient(circle, rgba(232, 97, 58, 0.25) 0%, transparent 70%);
+}
+
+html.dark .hero-orb-2 {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%);
+}
+
+/* ── Hero content staggered entrance ── */
+.hero-eyebrow {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.hero-title {
+  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.hero-sub {
+  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+.hero-stats {
+  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+}
+
+/* ── Stat blocks ── */
+.stat-block {
+  animation: stat-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stat-block:nth-child(1) { animation-delay: 0.45s; }
+.stat-block:nth-child(2) { animation-delay: 0.55s; }
+.stat-block:nth-child(3) { animation-delay: 0.65s; }
+
+.stat-num {
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+
+/* ── Recent section ── */
+.recent-section {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.recent-chip {
+  animation: chip-slide 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.recent-chip:nth-child(1) { animation-delay: 0.25s; }
+.recent-chip:nth-child(2) { animation-delay: 0.35s; }
+.recent-chip:nth-child(3) { animation-delay: 0.45s; }
+
+/* ── Privacy banner ── */
+.privacy-tip-banner {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.privacy-tip-banner:hover {
+  border-color: rgba(232, 97, 58, 0.4);
+  box-shadow: 0 0 0 3px rgba(232, 97, 58, 0.06);
+}
+
+/* ── Category section header animation ── */
+.category-section-header {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+/* ── Category grid stagger ── */
+.category-grid {
+  animation: fade-in 0.3s ease 0.4s both;
+}
+
+.category-card {
+  animation: card-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+}
+.category-card:nth-child(1) { animation-delay: 0.42s; }
+.category-card:nth-child(2) { animation-delay: 0.50s; }
+.category-card:nth-child(3) { animation-delay: 0.58s; }
+.category-card:nth-child(4) { animation-delay: 0.66s; }
+.category-card:nth-child(5) { animation-delay: 0.74s; }
+.category-card:nth-child(6) { animation-delay: 0.82s; }
+.category-card:nth-child(7) { animation-delay: 0.90s; }
+
+/* Shimmer effect on category card hover */
+.category-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  pointer-events: none;
+  transition: none;
+}
+
+.category-card:hover::after {
+  animation: shimmer-sweep 0.5s ease forwards;
+}
+
+html.dark .category-card::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+}
+
+/* ── Category count badge dot indicator ── */
+.category-card:hover .category-count {
+  border-color: var(--cat-color, var(--accent-primary));
+  color: var(--cat-color, var(--accent-primary));
+  transition: all 0.2s;
+}
+
+/* ── Tool card grid stagger ── */
+.tool-card {
+  animation: card-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+/* Shimmer on tool card hover */
+.tool-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  pointer-events: none;
+}
+
+.tool-card:hover::after {
+  animation: shimmer-sweep 0.45s ease forwards;
+}
+
+html.dark .tool-card::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+}
+
+/* ── Category page section header ── */
+.category-page-header {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+/* ── Drop zone drag-over enhancement ── */
+.drop-zone {
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(232, 97, 58, 0.05),
+    transparent
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.drop-zone.drag-over::before {
+  opacity: 1;
+  animation: progress-scan 1.5s linear infinite;
+}
+
+.drop-zone.drag-over .drop-zone-icon {
+  opacity: 0.9;
+  transform: translateY(-4px);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--accent-primary);
+}
+
+/* ── Active dot pulse (offline-badge) ── */
+.offline-badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--positive);
+  animation: dot-blink 2s ease-in-out infinite;
+  margin-right: 4px;
+}
+
+/* ── Workspace page entrance ── */
+.workspace-page {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+/* ── Source card dot pulse ── */
+.source-card-dot:not(.empty) {
+  animation: dot-blink 2.5s ease-in-out infinite;
+}
+
+/* ── File item entrance ── */
+.file-item {
+  animation: chip-slide 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Run button glow on hover ── */
+.btn-run {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-run::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: none;
+}
+
+.btn-run:hover::after {
+  animation: shimmer-sweep 0.6s ease forwards;
+}
+
+/* ── Page enter improvement ── */
+.page-enter {
+  animation: fade-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Tool card action arrow animate ── */
+.tool-card-action {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), color 0.15s;
+}
+
+.tool-card:hover .tool-card-action {
+  transform: translateX(4px);
+}
+
+/* ── Category explore arrow animate ── */
+.category-explore {
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.category-card:hover .category-explore {
+  transform: translateX(5px);
+}
+
+/* ── Breadcrumb entrance ── */
+.tool-breadcrumb {
+  animation: fade-in 0.4s ease 0.1s both;
+}
+
+/* ── Navbar logo mark subtle pulse on hover ── */
+.navbar-logo-mark {
+  transition: box-shadow 0.25s, transform 0.2s;
+}
+
+.navbar-logo-mark:hover {
+  transform: scale(1.08) rotate(-2deg);
+  box-shadow: 0 4px 14px rgba(232, 97, 58, 0.4);
+}
+
+/* ── Theme toggle spin animation ── */
+.theme-toggle {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, border-color 0.15s, color 0.15s !important;
+}
+
+.theme-toggle:hover {
+  transform: rotate(20deg) scale(1.1);
+}
+
+/* ── Stat number count-up visual cue ── */
+@keyframes num-flash {
+  0%   { color: var(--accent-primary); }
+  100% { color: var(--text-primary); }
+}
+
+.stat-num.counting {
+  animation: num-flash 1.2s ease forwards;
+}
+
+/* ── Category page tool grid staggered rise ── */
+.tool-cards-grid .tool-card:nth-child(1)  { animation-delay: 0.10s; }
+.tool-cards-grid .tool-card:nth-child(2)  { animation-delay: 0.16s; }
+.tool-cards-grid .tool-card:nth-child(3)  { animation-delay: 0.22s; }
+.tool-cards-grid .tool-card:nth-child(4)  { animation-delay: 0.28s; }
+.tool-cards-grid .tool-card:nth-child(5)  { animation-delay: 0.34s; }
+.tool-cards-grid .tool-card:nth-child(6)  { animation-delay: 0.40s; }
+.tool-cards-grid .tool-card:nth-child(7)  { animation-delay: 0.46s; }
+.tool-cards-grid .tool-card:nth-child(8)  { animation-delay: 0.52s; }
+.tool-cards-grid .tool-card:nth-child(9)  { animation-delay: 0.58s; }
+.tool-cards-grid .tool-card:nth-child(10) { animation-delay: 0.64s; }
+.tool-cards-grid .tool-card:nth-child(11) { animation-delay: 0.68s; }
+.tool-cards-grid .tool-card:nth-child(12) { animation-delay: 0.72s; }
+.tool-cards-grid .tool-card:nth-child(n+13) { animation-delay: 0.75s; }
+
+/* ── Modal entrance ── */
+@keyframes modal-scale-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Scroll-driven subtle reveal for late sections ── */
+@supports (animation-timeline: scroll()) {
+  .category-grid,
+  .tool-cards-grid {
+    animation: none;
+  }
+
+  .category-card,
+  .tool-card {
+    animation: card-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 20%;
+  }
+}

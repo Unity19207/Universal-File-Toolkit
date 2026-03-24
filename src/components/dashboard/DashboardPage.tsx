@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '../common/Modal'
 import { categoryMeta } from '../../core/plugins/categories'
@@ -15,6 +15,32 @@ const CATEGORY_COLORS: Record<string, string> = {
   archive: 'var(--cat-archive)',
 }
 
+function useCountUp(target: number, duration = 1200, delay = 450) {
+  const [count, setCount] = useState(0)
+  const [flashing, setFlashing] = useState(false)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (target === 0) { setCount(0); return }
+      const steps = 30
+      const interval = duration / steps
+      let step = 0
+      setFlashing(true)
+      const timer = setInterval(() => {
+        step++
+        setCount(Math.round((step / steps) * target))
+        if (step >= steps) {
+          clearInterval(timer)
+          setCount(target)
+          setTimeout(() => setFlashing(false), 600)
+        }
+      }, interval)
+      return () => clearInterval(timer)
+    }, delay)
+    return () => clearTimeout(timeout)
+  }, [target, duration, delay])
+  return { count, flashing }
+}
+
 export function DashboardPage() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const recentIds = useToolkitStore((state) => state.preferences.recentToolIds)
@@ -24,12 +50,18 @@ export function DashboardPage() {
   )
   const recentToolsLimited = recentTools.slice(0, 3)
   const totalTools = toolRegistry.length
+  const totalCategories = Object.keys(categoryMeta).length
+  const { count: toolCount, flashing: toolFlashing } = useCountUp(totalTools, 1000, 460)
+  const { count: catCount, flashing: catFlashing } = useCountUp(totalCategories, 700, 560)
+  const { count: serverCount } = useCountUp(0, 300, 660)
 
   return (
     <main className="min-h-[calc(100vh-48px)] bg-[var(--bg-base)]">
       {/* ── HERO ── */}
       <div className="dashboard-hero">
         <div className="hero-grid-bg" />
+        <div className="hero-orb hero-orb-1" />
+        <div className="hero-orb hero-orb-2" />
         <div className="hero-content">
           <div className="hero-eyebrow">Universal File Toolkit</div>
           <h1 className="hero-title">Precision systems for local file transformation.</h1>
@@ -40,15 +72,15 @@ export function DashboardPage() {
 
         <div className="hero-stats">
           <div className="stat-block">
-            <span className="stat-num">{totalTools}</span>
+            <span className={`stat-num${toolFlashing ? ' counting' : ''}`}>{toolCount}</span>
             <span className="stat-lbl">tools</span>
           </div>
           <div className="stat-block">
-            <span className="stat-num">{Object.keys(categoryMeta).length}</span>
+            <span className={`stat-num${catFlashing ? ' counting' : ''}`}>{catCount}</span>
             <span className="stat-lbl">categories</span>
           </div>
           <div className="stat-block">
-            <span className="stat-num">0</span>
+            <span className="stat-num">{serverCount}</span>
             <span className="stat-lbl">server-side</span>
           </div>
         </div>
@@ -90,7 +122,7 @@ export function DashboardPage() {
       </div>
 
       {/* ── CATEGORIES ── */}
-      <div style={{ padding: '0 40px 12px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+      <div className="category-section-header" style={{ padding: '0 40px 12px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
           Tool categories
         </h2>

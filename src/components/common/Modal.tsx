@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode } from 'react'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ModalProps {
   open: boolean
@@ -25,7 +26,7 @@ export function Modal({ open, title, description, onClose, footer, children }: P
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
       <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -42,6 +43,7 @@ export function Modal({ open, title, description, onClose, footer, children }: P
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-footer">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

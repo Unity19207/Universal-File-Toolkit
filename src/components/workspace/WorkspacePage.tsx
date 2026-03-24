@@ -681,7 +681,15 @@ export function WorkspacePage() {
               )}
 
               {/* Preview content */}
-              {session!.job.result!.preview.textContent ? (
+              {session!.job.result!.preview.kind === "image" && session!.job.result!.preview.objectUrl ? (
+                <div className="output-preview-block output-image-preview">
+                  <img
+                    src={session!.job.result!.preview.objectUrl}
+                    alt={session!.job.result!.preview.title}
+                    className="output-preview-image"
+                  />
+                </div>
+              ) : session!.job.result!.preview.textContent ? (
                 session!.job.result!.outputs?.[0]?.type === "text/csv" ? (
                   <div className="output-preview-block overflow-hidden">
                     <CsvTablePreview
@@ -706,6 +714,7 @@ export function WorkspacePage() {
                   </div>
                 )
               ) : null}
+
 
               {/* Metadata pills */}
               {session?.job.result?.preview.metadata && (

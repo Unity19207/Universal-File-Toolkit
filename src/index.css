@@ -1859,6 +1859,7 @@ html.dark .options-panel-card textarea {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+
 }
 
 .output-download-item {
@@ -1881,9 +1882,10 @@ html.dark .options-panel-card textarea {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-all;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .output-download-size {
@@ -1936,6 +1938,9 @@ html.dark .options-panel-card textarea {
   background: var(--bg-elevated);
   border: 0.5px solid var(--border-color);
   border-radius: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .omp-label {
@@ -1952,10 +1957,81 @@ html.dark .options-panel-card textarea {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-primary);
-  max-width: 220px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── MOCK DATA GENERATOR SPECIFIC ── */
+.mock-add-field-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border: 1px dashed rgba(232, 97, 58, 0.4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mock-add-field-btn:hover {
+  background: rgba(232, 97, 58, 0.14);
+  border-color: var(--accent-primary);
+  border-style: solid;
+}
+
+.mock-builder-panel {
+  margin-top: 16px;
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  animation: fade-up 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html.dark .mock-builder-panel {
+  background: var(--bg-card);
+  border-color: var(--border-strong);
+}
+
+.mock-builder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 0.5px solid var(--border-color);
+  background: var(--bg-elevated);
+}
+
+/* ── IMAGE PREVIEW IN OUTPUT PANEL ── */
+.output-image-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  padding: 24px;
+  min-height: 120px;
+}
+
+.output-preview-image {
+  max-width: 100%;
+  max-height: 480px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  display: block;
 }
 
 /* Progress */

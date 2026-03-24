@@ -426,7 +426,7 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
     if (typeof val === 'boolean') return String(val)
     return String(val)
   }, [])
-  
+
   const genSampleValue = useCallback((col: ColumnDef, i: number) => genSampleValueUnmemoized(col, i), [genSampleValueUnmemoized])
 
   const showBuilder = options.outputFormat === 'csv' ||
@@ -434,86 +434,92 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
     (options.outputFormat === 'sql' && options.sqlMode === 'schema')
 
   return (
-    <div className="space-y-10 pb-12">
+    <div className="space-y-6 pb-12">
       {/* PANEL A - Output Format + Row Count */}
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Target Format</label>
-          <div className="flex flex-wrap gap-2">
-            {(['csv', 'json', 'sql'] as const).map((fmt) => (
-              <button
-                key={fmt}
-                onClick={() => handleUpdate({ outputFormat: fmt })}
-                className={`px-5 py-2.5 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all border ${
-                  options.outputFormat === fmt
-                    ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-md'
-                    : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border-color)] hover:border-[var(--accent-primary)]'
-                }`}
-              >
-                {fmt}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="options-panel-card">
+        <div className="options-panel-header">Configuration</div>
+        <div className="options-panel-body space-y-6">
           <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Record Count</label>
-            <div className="relative">
-              <input
-                type="number"
-                min={1}
-                max={10000000}
-                value={options.rowCount}
-                onChange={(e) => handleUpdate({ rowCount: Math.max(1, Math.min(10000000, Number(e.target.value))) })}
-                className="tool-input pr-16"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-muted)] opacity-40">ROWS</span>
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Output Format</label>
+            <div className="flex flex-wrap gap-2">
+              {(['csv', 'json', 'sql'] as const).map((fmt) => (
+                <button
+                  key={fmt}
+                  onClick={() => handleUpdate({ outputFormat: fmt })}
+                  className={`px-5 py-2 rounded-[var(--radius-sm)] text-[11px] font-black uppercase tracking-widest transition-all border ${
+                    options.outputFormat === fmt
+                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-md'
+                      : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border-color)] hover:border-[var(--accent-primary)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {fmt.toUpperCase()}
+                </button>
+              ))}
             </div>
           </div>
-          
-          {options.outputFormat === 'csv' && (
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Delimiter</label>
-              <select 
-                value={options.csvDelimiter} 
-                onChange={(e) => handleUpdate({ csvDelimiter: e.target.value as any })}
-                className="tool-input"
-              >
-                <option value=",">Comma (,)</option>
-                <option value=";">Semicolon (;)</option>
-                <option value="\t">Tab (\t)</option>
-              </select>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Record Count</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={10000000}
+                  value={options.rowCount}
+                  onChange={(e) => handleUpdate({ rowCount: Math.max(1, Math.min(10000000, Number(e.target.value))) })}
+                  className="tool-input flex-1"
+                />
+              </div>
+            </div>
+
+            {options.outputFormat === 'csv' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Delimiter</label>
+                <select
+                  value={options.csvDelimiter}
+                  onChange={(e) => handleUpdate({ csvDelimiter: e.target.value as any })}
+                  className="tool-input"
+                >
+                  <option value=",">Comma (,)</option>
+                  <option value=";">Semicolon (;)</option>
+                  <option value="\t">Tab (\t)</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {options.rowCount > 500000 && (
+            <div className="p-3 rounded-[var(--radius-sm)] border border-[var(--warning)] border-opacity-30 bg-[var(--warning)] bg-opacity-5 flex gap-3 items-start">
+              <span className="text-sm leading-none mt-0.5">⚡</span>
+              <p className="text-[11px] text-[var(--text-primary)] font-medium leading-relaxed">
+                Large dataset detected. Generation will be optimized for browser performance.
+              </p>
             </div>
           )}
         </div>
-
-        {options.rowCount > 500000 && (
-          <div className="p-4 rounded-sm border border-[var(--accent-primary)] border-opacity-20 bg-[var(--accent-primary)] bg-opacity-5 flex gap-3 items-start">
-            <span className="text-sm">⚡</span>
-            <p className="text-[11px] text-[var(--text-primary)] font-medium leading-relaxed">
-              Large dataset detected. Generation will be optimized for browser performance.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* PANEL B - Column Builder */}
       {showBuilder && (
-        <div className="space-y-6 pt-6 border-t border-[var(--border-color)]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Schema Definition</h3>
+        <div className="options-panel-card">
+          <div className="options-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Schema Definition</span>
             <button
               onClick={() => openBuilder(null)}
-              className="px-4 py-2 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-sm text-[10px] font-black uppercase tracking-widest hover:border-[var(--accent-primary)] transition-all flex items-center gap-2"
+              className="mock-add-field-btn"
             >
-              <span className="text-lg leading-none">+</span> Add field
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="6" y1="1" x2="6" y2="11" /><line x1="1" y1="6" x2="11" y2="6" />
+              </svg>
+              Add Field
             </button>
           </div>
+          <div className="options-panel-body space-y-3">
 
           <div className="space-y-3">
             {options.columns.length === 0 ? (
-              <div 
+              <div
                 onClick={() => openBuilder(null)}
                 className="w-full h-32 flex flex-col items-center justify-center border border-[var(--border-color)] border-dashed rounded-sm cursor-pointer hover:bg-[var(--bg-elevated)] transition-all opacity-60 hover:opacity-100"
               >
@@ -522,39 +528,43 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
             ) : (
               <div className="space-y-2">
                 {options.columns.map((col, idx) => (
-                  <div key={`${idx}-${col.name}`} className="group flex items-center gap-4 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-sm p-4 hover:border-[var(--accent-primary)] transition-all">
-                    <div className="shrink-0 w-8 h-8 rounded-sm bg-[var(--bg-base)] border border-[var(--border-color)] flex items-center justify-center text-[10px] font-mono font-bold text-[var(--text-muted)] opacity-60">
+                  <div key={`${idx}-${col.name}`} className="group flex items-stretch bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[var(--radius-sm)] hover:border-[var(--accent-primary)] transition-all overflow-hidden">
+                    {/* left accent bar */}
+                    <div className="w-[3px] shrink-0" style={{ background: 'var(--accent-primary)', opacity: 0.55 }} />
+
+                    {/* index */}
+                    <div className="shrink-0 flex items-center justify-center w-8 text-[10px] font-mono font-bold text-[var(--text-muted)] border-r border-[var(--border-color)]" style={{ opacity: 0.5 }}>
                       {idx + 1}
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-3 mb-1">
-                        <span className="font-bold text-sm text-[var(--text-primary)] truncate">{col.name}</span>
-                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm ${TYPE_CATEGORIES[col.type].color}`}>
-                          {TYPE_CATEGORIES[col.type].label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                        <span className="opacity-40">Sample:</span>
-                        <span className="font-mono text-[var(--text-secondary)] truncate">{String(genSampleValue(col, 0))}</span>
-                      </div>
+
+                    {/* name + meta */}
+                    <div className="flex-1 min-w-0 flex items-center gap-3 px-3 py-2">
+                      <span className="font-semibold text-[13px] text-[var(--text-primary)] truncate flex-1">{col.name}</span>
+                      <span className={`shrink-0 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-sm ${TYPE_CATEGORIES[col.type].color}`}>
+                        {TYPE_CATEGORIES[col.type].label}
+                      </span>
+                      <span className="shrink-0 text-[11px] font-mono text-[var(--text-muted)] max-w-[90px] truncate hidden sm:block" style={{ opacity: 0.5 }}>
+                        {String(genSampleValue(col, 0))}
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <button 
+                    {/* action buttons — always visible, subtle until hover */}
+                    <div className="shrink-0 flex items-center border-l border-[var(--border-color)] transition-all ">
+                      <button
                         onClick={() => openBuilder(idx)}
-                        className="p-2 text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors"
+                        className="px-3 text-[var(--text-muted)] hover:text-[var(--accent-primary)] bg-transparent hover:bg-[var(--bg-elevated)] transition-colors
+                        border-0 border-[var(--border-color)]"
                         title="Edit field"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
-                      <button 
+                      <button
                         onClick={() => removeColumn(idx)}
                         disabled={options.columns.length <= 1}
-                        className="p-2 text-[var(--text-muted)] hover:text-[var(--negative)] transition-colors disabled:opacity-20"
+                        className="px-3 text-[var(--text-muted)] hover:text-[var(--negative)] hover:bg-[var(--bg-elevated)] transition-colors disabled:opacity-20 border-0 border-[var(--border-color)]"
                         title="Delete field"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                       </button>
                     </div>
                   </div>
@@ -562,19 +572,23 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
               </div>
             )}
           </div>
-            
+
             {/* COLUMN BUILDER PANEL */}
             {builderOpen && (
-              <div className="bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-sm overflow-hidden shadow-2xl relative mt-6">
-                <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-base)] bg-opacity-40">
+              <div className="mock-builder-panel">
+                <div className="mock-builder-header">
                   <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)]" style={{ animation: 'dot-blink 1.8s ease-in-out infinite' }} />
                     <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-primary)]">{builderEditIndex === null ? 'Create Field' : 'Edit Field'}</h4>
                   </div>
-                  <button onClick={closeBuilder} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-lg leading-none p-1 transition-colors">×</button>
+                  <button onClick={closeBuilder} className="modal-close-btn" aria-label="Close builder">
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                      <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
                 </div>
-                
-                <div className="p-8 space-y-8">
+
+                <div className="options-panel-body space-y-6">
                   {/* ZONE A: Identity */}
                   <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-3">
@@ -589,13 +603,16 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                       />
                       {nameError && <p className="text-[10px] text-[var(--negative)] font-bold">{nameError}</p>}
                     </div>
-                    
+
                     <div className="space-y-4">
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Data Archetype</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 p-6 bg-[var(--bg-base)] bg-opacity-50 rounded-sm border border-[var(--border-color)] max-h-[300px] overflow-y-auto custom-scrollbar">
+                      <div
+                        className="grid grid-cols-2 lg:grid-cols-3 gap-6 p-5 rounded-[var(--radius-sm)] border border-[var(--border-color)] max-h-[320px] overflow-y-auto hide-scrollbar"
+                        style={{ background: 'var(--bg-elevated)' }}
+                      >
                         {(['Sequence', 'Identity', 'Numbers', 'Dates', 'Location', 'Text', 'Utility'] as CategoryGroup[]).map(group => (
-                          <div key={group} className="space-y-2">
-                            <div className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-60 border-b border-[var(--border-color)] pb-1 mb-2">{group}</div>
+                          <div key={group} className="space-y-1.5">
+                            <div className="text-[9px] font-black uppercase tracking-widest pb-1 mb-1.5 border-b border-[var(--border-color)]" style={{ color: 'var(--accent-primary)', opacity: 0.75 }}>{group}</div>
                             <div className="flex flex-col gap-1">
                               {(Object.entries(TYPE_CATEGORIES) as [ColumnType, any][]).filter(([_, conf]) => conf.group === group).map(([type, conf]) => (
                                 <button
@@ -604,10 +621,10 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                                     const nextName = !builderCol.name ? (DEFAULT_NAMES[type] || '') : builderCol.name
                                     setBuilderCol({ ...builderCol, type, name: nextName })
                                   }}
-                                  className={`text-left text-[11px] px-3 py-2 rounded-sm transition-all border ${
-                                    builderCol.type === type 
-                                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] font-bold shadow-md transform scale-[1.02]' 
-                                      : 'text-[var(--text-secondary)] border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-surface)]'
+                                  className={`text-left text-[11px] px-3 py-2 rounded-sm transition-all border w-full ${
+                                    builderCol.type === type
+                                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] font-bold shadow-sm'
+                                      : 'text-[var(--text-secondary)] bg-[var(--bg-surface)] border-[var(--border-color)] hover:border-[var(--accent-primary)] hover:text-[var(--text-primary)]'
                                   }`}
                                 >
                                   {conf.label}
@@ -621,14 +638,14 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                   </div>
 
                   {/* ZONE B: Configuration */}
-                  <div className="p-6 bg-[var(--bg-base)] bg-opacity-30 rounded-sm border border-[var(--border-color)]">
+                  <div className="p-5 rounded-[var(--radius-sm)] border border-[var(--border-color)]" style={{ background: 'var(--bg-elevated)' }}>
                     <div className="flex items-center justify-between mb-6 border-b border-[var(--border-color)] pb-3">
                       <h5 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Archetype Parameters</h5>
                       <div className="text-[10px] font-mono text-[var(--accent-primary)] font-bold">
                         {builderCol.type.toUpperCase()}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                       {['first_name', 'last_name', 'full_name', 'email', 'phone', 'boolean', 'uuid', 'city', 'country', 'zip_code', 'street_address', 'url', 'ipv4', 'hex_color', 'company', 'job_title'].includes(builderCol.type) && (
                         <div className="col-span-1 sm:col-span-2 text-[11px] text-[var(--text-muted)] italic py-2">
@@ -771,7 +788,7 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                              </div>
                             <span>Enable Nullability</span>
                           </label>
-                          
+
                           {['integer', 'text', 'email', 'template_string'].includes(builderCol.type) && (
                             <label className="flex items-center gap-3 text-[11px] font-bold text-[var(--text-primary)] cursor-pointer group">
                                <div className="relative flex items-center">
@@ -789,28 +806,33 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                   </div>
 
                   {/* PREVIEW + ACTIONS */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6 pt-4">
-                    <div className="flex-1 p-4 bg-[var(--accent-primary)] bg-opacity-5 border border-[var(--accent-primary)] border-opacity-10 rounded-sm">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-primary)]">Live Preview</span>
-                        <span className="text-[9px] font-mono text-[var(--text-muted)] opacity-50">VALUE #1</span>
+                  <div className="space-y-4">
+                    {/* Live Preview */}
+                    <div
+                      className="p-4 rounded-[var(--radius-sm)]"
+                      style={{ background: 'rgba(232,97,58,0.06)', border: '0.5px solid rgba(232,97,58,0.2)' }}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent-primary)' }}>Live Preview</span>
+                        <span className="text-[9px] font-mono text-[var(--text-muted)] opacity-50">value #1</span>
                       </div>
                       <div className="text-sm font-bold text-[var(--text-primary)] font-mono truncate">
                         {String(genSampleValue(builderCol, 0))}
                       </div>
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <button 
+
+                    {/* Action buttons */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-color)]">
+                      <button
                         onClick={closeBuilder}
-                        className="flex-1 sm:flex-none px-6 py-2.5 text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
+                        className="px-5 py-2 text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-[var(--radius-sm)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition-all"
                       >
                         Discard
                       </button>
-                      <button 
+                      <button
                         onClick={saveBuilderCol}
                         disabled={!builderCol.name.trim() || !!nameError}
-                        className="flex-1 sm:flex-none px-8 py-2.5 bg-[var(--accent-primary)] text-white text-[11px] font-black uppercase tracking-widest rounded-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-30 disabled:translate-y-0"
+                        className="px-7 py-2 bg-[var(--accent-primary)] text-white text-[11px] font-black uppercase tracking-widest rounded-[var(--radius-sm)] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-30 disabled:translate-y-0"
                       >
                         {builderEditIndex === null ? 'Create Field' : 'Update Field'}
                       </button>
@@ -820,10 +842,12 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
               </div>
             )}
           </div>
+        </div>
         )}
       {/* PANEL C - Format-specific specifics */}
-      <div className="space-y-6 pt-6 border-t border-[var(--border-color)]">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">{options.outputFormat} Optimization</h3>
+      <div className="options-panel-card">
+        <div className="options-panel-header">{options.outputFormat.toUpperCase()} Options</div>
+        <div className="options-panel-body space-y-4">
 
         {options.outputFormat === 'csv' && (
           <div className="space-y-4">
@@ -883,8 +907,8 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">SQL Dialect</label>
-                <select 
-                  value={options.sqlDialect} 
+                <select
+                  value={options.sqlDialect}
                   onChange={(e) => handleUpdate({ sqlDialect: e.target.value as any })}
                   className="tool-input"
                 >
@@ -894,7 +918,7 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                 </select>
               </div>
             </div>
-            
+
             <div className="flex gap-1 p-1 bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-sm">
               {(['schema', 'sample'] as const).map(mode => (
                 <button
@@ -908,7 +932,7 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
                 </button>
               ))}
             </div>
-            
+
             {options.sqlMode === 'sample' && (
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Source SQL Script</label>
@@ -923,6 +947,7 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   )
@@ -932,7 +957,7 @@ function MockDataOptionsComponent({ options, onChange }: ToolOptionsComponentPro
 const module: ToolModule<MockDataOptions> = {
   defaultOptions: {
     outputFormat: 'csv',
-    rowCount: 100,
+    rowCount: 7,
     columns: [{ name: 'id', type: 'auto_increment' }],
     csvDelimiter: ',',
     csvIncludeHeader: true,

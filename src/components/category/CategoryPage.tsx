@@ -37,7 +37,7 @@ export function CategoryPage() {
     <main
       style={{ background: "var(--bg-base)", minHeight: "calc(100vh - 44px)" }}
     >
-      <section style={{ padding: "40px 40px 10px" }}>
+      <section className="category-page-header" style={{ padding: "40px 40px 10px" }}>
         <div className="tool-breadcrumb mb-6">
           <Link to="/">Dashboard</Link>
           <span className="bc-sep">/</span>
@@ -52,7 +52,7 @@ export function CategoryPage() {
               {category.description}
             </p>
           </div>
-          <div className="shrink-0 offline-badge">● {tools.length} SYSTEMS</div>
+          <div className="shrink-0 offline-badge">{tools.length} SYSTEMS</div>
         </div>
       </section>
 

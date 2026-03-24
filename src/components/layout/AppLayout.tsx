@@ -12,18 +12,9 @@ export function AppLayout() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-base)' }}>
       <nav className="navbar h-12 flex items-center justify-between px-10 border-b border-[var(--border-color)] bg-[var(--bg-surface)] sticky top-0 z-100">
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <div style={{
-            width: '24px', height: '24px',
-            background: 'var(--accent-primary)',
-            borderRadius: '5px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'monospace', fontSize: '13px', fontWeight: 700,
-            color: '#ffffff', flexShrink: 0
-          }}>U</div>
-          <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
-            Universal File Toolkit
-          </span>
+        <Link to="/" className="navbar-logo-group">
+          <div className="navbar-logo-mark">U</div>
+          <span className="navbar-app-name">Universal File Toolkit</span>
         </Link>
         <div className="flex items-center gap-6">
           {recentTool && location.pathname !== `/tools/${recentTool.id}` ? (

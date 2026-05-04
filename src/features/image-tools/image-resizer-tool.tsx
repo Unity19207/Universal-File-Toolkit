@@ -223,6 +223,11 @@ const module: ToolModule<ImageResizerOptions> = {
   },
   OptionsComponent: ImageResizerOptionsComponent,
   async run(files, options, helpers) {
+    // Fix #36: validate dimensions before processing
+    if (options.width < 1 || options.height < 1) {
+      throw new Error('Width and height must both be at least 1 pixel.')
+    }
+
     const outputs: OutputArtifact[] = []
 
     for (const [index, item] of files.entries()) {
@@ -232,7 +237,7 @@ const module: ToolModule<ImageResizerOptions> = {
         message: `Rendering ${item.name}`,
       })
 
-      const { blob, sizing } = await renderImage(item.file, options)
+      const { blob } = await renderImage(item.file, options)
       const stem = item.name.replace(/\.[^.]+$/, '')
       outputs.push({
         id: crypto.randomUUID(),
@@ -249,30 +254,34 @@ const module: ToolModule<ImageResizerOptions> = {
       })
 
       if (helpers.signal.aborted) throw new Error('Image conversion canceled.')
-
-      if (index === files.length - 1) {
-        const sizeDelta = outputs[0].size - files[0].size
-        return {
-          outputs,
-          preview: {
-            kind: 'image',
-            title: 'Image transform complete',
-            summary: `${files.length} image${files.length > 1 ? 's' : ''} processed locally.`,
-            metadata: [
-              { label: 'Canvas size', value: `${sizing.canvasWidth} x ${sizing.canvasHeight}` },
-              { label: 'Output format', value: options.format.replace('image/', '').toUpperCase() },
-              { label: 'Quality', value: `${options.quality}%` },
-              {
-                label: sizeDelta <= 0 ? 'Space saved' : 'Size increase',
-                value: formatBytes(Math.abs(sizeDelta)),
-              },
-            ],
-          },
-        }
-      }
     }
 
-    throw new Error('No image output was produced.')
+    // Fix #34: return OUTSIDE loop so all batch files are included
+    // Fix #35: aggregate all input/output sizes for accurate delta
+    const totalOriginalSize = files.reduce((sum, f) => sum + f.size, 0)
+    const totalOutputSize = outputs.reduce((sum, o) => sum + o.size, 0)
+    const sizeDelta = totalOutputSize - totalOriginalSize
+    const lastSizing = outputs.length > 0
+      ? { canvasWidth: options.width, canvasHeight: options.height }
+      : { canvasWidth: 0, canvasHeight: 0 }
+
+    return {
+      outputs,
+      preview: {
+        kind: 'image',
+        title: 'Image transform complete',
+        summary: `${files.length} image${files.length > 1 ? 's' : ''} processed locally.`,
+        metadata: [
+          { label: 'Canvas size', value: `${lastSizing.canvasWidth} x ${lastSizing.canvasHeight}` },
+          { label: 'Output format', value: options.format.replace('image/', '').toUpperCase() },
+          { label: 'Quality', value: `${options.quality}%` },
+          {
+            label: sizeDelta <= 0 ? 'Space saved' : 'Size increase',
+            value: formatBytes(Math.abs(sizeDelta)),
+          },
+        ],
+      },
+    }
   },
 }
 

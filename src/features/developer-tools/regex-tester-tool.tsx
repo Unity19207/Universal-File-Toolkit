@@ -78,8 +78,16 @@ const module: ToolModule<RegexTesterOptions> = {
     const input = files[0]
     helpers.onProgress({ phase: 'processing', value: 0.35, message: `Testing ${input.name}` })
     const text = await input.file.text()
-    const regex = new RegExp(options.pattern, options.flags)
-    const scanRegex = new RegExp(options.pattern, options.flags.includes('g') ? options.flags : `${options.flags}g`)
+
+    // Fix #45: catch invalid pattern or flags before processing
+    let regex: RegExp, scanRegex: RegExp
+    try {
+      regex = new RegExp(options.pattern, options.flags)
+      const scanFlags = options.flags.includes('g') ? options.flags : `${options.flags}g`
+      scanRegex = new RegExp(options.pattern, scanFlags)
+    } catch (e: any) {
+      throw new Error(`Invalid regex: ${e.message}`)
+    }
 
     if (options.outputMode === 'replace') {
       const replaced = text.replace(regex, options.replaceWith)

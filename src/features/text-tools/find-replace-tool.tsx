@@ -14,9 +14,13 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function createRegex(options: FindReplaceOptions, forceGlobal = false) {
+function createRegex(options: FindReplaceOptions, forceGlobal = false): RegExp {
   const flags = `${options.caseInsensitive ? 'i' : ''}${options.multiline ? 'm' : ''}${options.replaceAll || forceGlobal ? 'g' : ''}`
-  return new RegExp(options.useRegex ? options.find : escapeRegex(options.find), flags)
+  try {
+    return new RegExp(options.useRegex ? options.find : escapeRegex(options.find), flags)
+  } catch {
+    throw new Error(`Invalid regular expression: "${options.find}" — ${options.useRegex ? 'check your regex syntax' : 'unexpected special character'}`)
+  }
 }
 
 function FindReplaceOptionsComponent({ options, onChange }: ToolOptionsComponentProps<FindReplaceOptions>) {

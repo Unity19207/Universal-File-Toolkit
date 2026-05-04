@@ -62,11 +62,11 @@ const module: ToolModule<CsvMergerOptions> = {
       helpers.onProgress({ phase: 'processing', value: 0.1 + (0.4 * i) / files.length, message: `Streaming ${files[i].name}...` })
       const text = await files[i].file.text()
       const parsed = Papa.parse(text, { header: true, skipEmptyLines: true })
-      if (parsed.data.length > 0) {
-        parsedData.push(parsed.data)
-        if (parsed.meta.fields) {
-          parsed.meta.fields.forEach(f => allHeaders.add(f))
-        }
+      // Fix #18: throw on empty file so indices don't desync
+      if (parsed.data.length === 0) throw new Error(`File "${files[i].name}" is empty or has no data rows. All files must have data.`)
+      parsedData.push(parsed.data)
+      if (parsed.meta.fields) {
+        parsed.meta.fields.forEach(f => allHeaders.add(f))
       }
     }
 
@@ -80,19 +80,20 @@ const module: ToolModule<CsvMergerOptions> = {
       // Left Join on first file
       const baseRows = [...parsedData[0]]
       const keyCol = options.keyColumn
-      
+
       for (let i = 1; i < parsedData.length; i++) {
         const others = parsedData[i]
         const otherMap: Record<string, any> = {}
         for (const row of others) {
-          if (row[keyCol]) otherMap[row[keyCol]] = row
+          // Fix #19: strict null check so numeric key 0 is correctly matched
+          if (row[keyCol] !== undefined && row[keyCol] !== null) otherMap[String(row[keyCol])] = row
         }
-        
+
         for (let j = 0; j < baseRows.length; j++) {
-           const baseVal = baseRows[j][keyCol]
-           if (baseVal && otherMap[baseVal]) {
-             baseRows[j] = { ...baseRows[j], ...otherMap[baseVal] }
-           }
+          const baseVal = baseRows[j][keyCol]
+          if (baseVal !== undefined && baseVal !== null && otherMap[String(baseVal)]) {
+            baseRows[j] = { ...baseRows[j], ...otherMap[String(baseVal)] }
+          }
         }
       }
       finalRows = baseRows
@@ -100,7 +101,9 @@ const module: ToolModule<CsvMergerOptions> = {
 
     helpers.onProgress({ phase: 'processing', value: 0.8, message: 'Generating output buffer...' })
 
-    const finalHeaders = options.handleHeaders === 'Use first file headers' ? (parsedData[0][0] ? Object.keys(parsedData[0][0]) : []) : Array.from(allHeaders)
+    // Fix #20: use per-file header union for 'Use first file headers' too (Object.keys reads only row 0's keys)
+    const firstFileHeaders = parsedData[0].length > 0 ? Object.keys(parsedData[0][0]) : []
+    const finalHeaders = options.handleHeaders === 'Use first file headers' ? firstFileHeaders : Array.from(allHeaders)
     const resultCSV = Papa.unparse(finalRows, { columns: finalHeaders })
     const resultBlob = new Blob([resultCSV], { type: 'text/csv' })
 

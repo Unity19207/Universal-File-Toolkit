@@ -1,9 +1,10 @@
 import type { ToolModule, ToolOptionsComponentProps } from '../../core/plugins/types'
-import { OptionsSection, OptionsSelect, OptionsCheckbox } from '../../components/workspace/OptionsComponents'
+import { OptionsSection, OptionsSelect, OptionsCheckbox, OptionsSlider } from '../../components/workspace/OptionsComponents'
 
 interface PdfCompressOptions {
   quality: 72 | 150 | 300
   grayscale: boolean
+  jpegQuality: number
 }
 
 function PdfCompressOptionsComponent({ options, onChange }: ToolOptionsComponentProps<PdfCompressOptions>) {
@@ -24,17 +25,29 @@ function PdfCompressOptionsComponent({ options, onChange }: ToolOptionsComponent
         checked={options.grayscale}
         onChange={(checked) => onChange({ ...options, grayscale: checked })}
       />
+      <OptionsSection label="">
+        <OptionsSlider
+          label="JPEG Quality (0.60 = smallest, 0.95 = sharpest)"
+          min={60}
+          max={95}
+          value={Math.round(options.jpegQuality * 100)}
+          onChange={(val) => onChange({ ...options, jpegQuality: val / 100 })}
+        />
+      </OptionsSection>
       <p className="opts-helper">Note: This works by selectively rendering each page to a lossy JPEG structure at your chosen DPI, which shrinks vector blobs significantly.</p>
     </OptionsSection>
   )
 }
 
 const module: ToolModule<PdfCompressOptions> = {
-  defaultOptions: { quality: 150, grayscale: false },
+  defaultOptions: { quality: 150, grayscale: false, jpegQuality: 0.85 },
   OptionsComponent: PdfCompressOptionsComponent,
   async run(files, options, helpers) {
     const pdfjsLib = await import('pdfjs-dist')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url).toString()
+    // Fix #31: set workerSrc only once
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url).toString()
+    }
     
     const { PDFDocument } = await import('pdf-lib')
     
@@ -71,7 +84,7 @@ const module: ToolModule<PdfCompressOptions> = {
         ctx.putImageData(imgData, 0, 0)
       }
       
-      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 })
+      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: options.jpegQuality })
       const jpegBytes = await blob.arrayBuffer()
       const embeddedJpg = await newPdf.embedJpg(jpegBytes)
       const { width, height } = embeddedJpg.scale(1 / scale) // restore original pt dimensions
@@ -87,9 +100,12 @@ const module: ToolModule<PdfCompressOptions> = {
     helpers.onProgress({ phase: 'finalizing', value: 1, message: 'Done' })
     const outName = `${input.name.replace(/\.[^.]+$/, '')}-compressed.pdf`
     
+    // Fix #32: avoid negative "% smaller" when output is actually larger
+    const ratio = (1 - finalBlob.size / input.file.size) * 100
+    const ratioLabel = ratio >= 0 ? `${ratio.toFixed(1)}% smaller` : `${Math.abs(ratio).toFixed(1)}% larger`
     return {
       outputs: [{ id: crypto.randomUUID(), name: outName, blob: finalBlob, type: 'application/pdf', size: finalBlob.size }],
-      preview: { kind: 'pdf', title: 'PDF Compressed', summary: `Reduced to ${options.quality} dpi representation.`, metadata: [{ label: 'Compression Ratio', value: `${(100 - (finalBlob.size / input.file.size) * 100).toFixed(1)}% smaller` }] },
+      preview: { kind: 'pdf', title: 'PDF Compressed', summary: `Reduced to ${options.quality} dpi representation.`, metadata: [{ label: 'Size Change', value: ratioLabel }] },
     }
   },
 }

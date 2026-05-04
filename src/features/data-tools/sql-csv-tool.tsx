@@ -1,5 +1,7 @@
 import type { ToolModule, ToolOptionsComponentProps } from '../../core/plugins/types'
 import { OptionsSection, OptionsTextArea, OptionsSelect } from '../../components/workspace/OptionsComponents'
+import initSqlJs from 'sql.js'
+import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 
 interface SqlCsvOptions {
   query: string
@@ -34,29 +36,14 @@ function SqlCsvOptionsComponent({ options, onChange }: ToolOptionsComponentProps
   )
 }
 
-let sqlPromise: Promise<any> | null = null
+// Fix #11/#12: use locally bundled sql.js (no CDN). Fix #13: reset on failure so retry works.
+let sqlPromise: Promise<initSqlJs.SqlJsStatic> | null = null
 
-async function getSQL() {
+async function getSQL(): Promise<initSqlJs.SqlJsStatic> {
   if (sqlPromise) return sqlPromise
-  
-  if (typeof window === 'undefined') throw new Error('Cannot load SQL.js outside DOM layer.')
-  
-  sqlPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js'
-    script.onload = async () => {
-      try {
-        // @ts-ignore
-        const SQL = await window.initSqlJs({
-          locateFile: (file: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${file}`
-        })
-        resolve(SQL)
-      } catch (e) {
-        reject(e)
-      }
-    }
-    script.onerror = () => reject(new Error('Failed to load SQL.js via CDN'))
-    document.head.appendChild(script)
+  sqlPromise = initSqlJs({ locateFile: () => sqlWasmUrl }).catch((e) => {
+    sqlPromise = null // Fix #13: reset so the next call can retry fresh
+    throw e
   })
   return sqlPromise
 }
@@ -67,7 +54,7 @@ const module: ToolModule<SqlCsvOptions> = {
   async run(files, options, helpers) {
     const Papa = await import('papaparse')
     
-    helpers.onProgress({ phase: 'processing', value: 0.1, message: 'Downloading SQL WASM runtime (~2MB)...' })
+    helpers.onProgress({ phase: 'processing', value: 0.1, message: 'Initialising SQL WASM runtime...' })
     const SQL = await getSQL()
     
     helpers.onProgress({ phase: 'processing', value: 0.3, message: 'Parsing CSV payload...' })
@@ -87,7 +74,8 @@ const module: ToolModule<SqlCsvOptions> = {
     
     db.run('BEGIN TRANSACTION')
     for (const row of parsed.data as any[]) {
-      const vals = parsed.meta.fields.map(f => row[f] || null)
+      // Fix #15: use strict undefined check so numeric 0 and empty strings are preserved correctly
+      const vals = parsed.meta.fields!.map(f => (row[f] !== undefined && row[f] !== '' ? row[f] : null))
       db.run(insertStmt, vals)
     }
     db.run('COMMIT')
@@ -126,6 +114,9 @@ const module: ToolModule<SqlCsvOptions> = {
     }
     
     helpers.onProgress({ phase: 'finalizing', value: 1, message: 'Done' })
+
+    // Fix #14: close db to release WASM memory
+    db.close()
     
     return {
       outputs: [{ id: crypto.randomUUID(), name: resultFileName, blob: resultBlob, type: resultBlob.type, size: resultBlob.size }],

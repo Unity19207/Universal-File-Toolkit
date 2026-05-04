@@ -48,6 +48,7 @@ const module: ToolModule<TomlJsonOptions> = {
         const obj = JSON.parse(text)
         result = TOML.stringify(obj)
         outName = input.name.replace(/\.[^.]+$/, '') + '.toml'
+        mime = 'application/toml'
       }
     } catch (e: any) {
       throw new Error(`Parse error: ${e.message}`)

@@ -52,6 +52,9 @@ function MarkdownHtmlOptionsComponent({ options, onChange }: ToolOptionsComponen
       </div>
       <p className="text-xs text-secondary mt-4">
         Bidirectional document transformation using Marked and Turndown engines.
+        {options.direction === 'md-to-html' && options.wrapInDocument && (
+          <span className="block mt-1 text-amber-500"> ⚠ The output HTML file will execute scripts if opened in a browser — this is expected.</span>
+        )}
       </p>
     </OptionsSection>
   )
@@ -76,8 +79,8 @@ const module: ToolModule<MarkdownHtmlOptions> = {
 
     if (options.direction === 'md-to-html') {
       const { marked } = await import('marked')
-      marked.setOptions({ gfm: options.gfm, breaks: true })
-      const html = await marked.parse(text)
+      // Fix #25: pass options per-call instead of mutating global marked state
+      const html = await marked.parse(text, { gfm: options.gfm, breaks: true })
       output = options.wrapInDocument
         ? `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Converted Document</title>\n</head>\n<body>\n${html}\n</body>\n</html>`
         : html

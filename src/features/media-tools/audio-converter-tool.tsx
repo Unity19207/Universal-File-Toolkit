@@ -64,11 +64,13 @@ const module: ToolModule<AudioConverterOptions> = {
       helpers.onProgress({ phase: 'processing', value: 0.1, message: 'Loading audio processing engine (first time only, ~30MB)...' })
       globalFFmpeg = new FFmpeg()
 
-      // Fix #39: load from local @ffmpeg/core package (offline-first, no CDN)
-      const ffmpegCoreUrl = new URL('@ffmpeg/core/dist/esm/ffmpeg-core.js', import.meta.url).toString()
-      const ffmpegWasmUrl = new URL('@ffmpeg/core/dist/esm/ffmpeg-core.wasm', import.meta.url).toString()
+      // Fix #39: load from public/ static assets (copied from @ffmpeg/core during build)
+      // Using static paths avoids Rollup's exports-field resolution failure on @ffmpeg/core
       try {
-        await globalFFmpeg.load({ coreURL: ffmpegCoreUrl, wasmURL: ffmpegWasmUrl })
+        await globalFFmpeg.load({
+          coreURL: '/ffmpeg-core.js',
+          wasmURL: '/ffmpeg-core.wasm',
+        })
       } catch (e) {
         globalFFmpeg = null // Fix #40: reset so next run can retry cleanly
         throw e

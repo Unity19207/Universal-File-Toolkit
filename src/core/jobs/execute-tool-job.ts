@@ -2,12 +2,11 @@ import { attachObjectUrls } from '../files/file-helpers'
 import type { ToolPlugin } from '../plugins/types'
 import { useToolkitStore } from './toolkit-store'
 
-export async function executeToolJob(tool: ToolPlugin, options: any) {
+async function runJob(tool: ToolPlugin, options: any, controller: AbortController) {
   const session = useToolkitStore.getState().sessions[tool.id]
   const inputs = session?.inputs ?? []
   if (tool.requiresFile !== false && inputs.length === 0) return
 
-  const controller = new AbortController()
   const startedAt = Date.now()
   useToolkitStore.getState().setJob(tool.id, {
     id: crypto.randomUUID(),
@@ -58,6 +57,8 @@ export async function executeToolJob(tool: ToolPlugin, options: any) {
       finishedAt: Date.now(),
     })
   } catch (error) {
+    // Don't surface abort errors as failures — user intentionally canceled
+    if (controller.signal.aborted) return
     const message = error instanceof Error ? error.message : 'The tool could not process these files.'
     useToolkitStore.getState().finishJob(tool.id, {
       ...useToolkitStore.getState().sessions[tool.id].job,
@@ -72,4 +73,11 @@ export async function executeToolJob(tool: ToolPlugin, options: any) {
       finishedAt: Date.now(),
     })
   }
+}
+
+// Fix #49/#50: return { promise, abort } so the caller can cancel in-flight jobs
+export function executeToolJob(tool: ToolPlugin, options: any): { promise: Promise<void>; abort: () => void } {
+  const controller = new AbortController()
+  const promise = runJob(tool, options, controller)
+  return { promise, abort: () => controller.abort() }
 }

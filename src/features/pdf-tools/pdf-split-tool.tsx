@@ -58,12 +58,15 @@ const module: ToolModule<PdfSplitOptions> = {
     const outputs = []
 
     if (options.mode === 'per-page') {
+      if (totalPages > 100) {
+        throw new Error(`This PDF has ${totalPages} pages. Per-page split is limited to 100 pages to prevent memory exhaustion. Use page ranges instead.`)
+      }
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
         const doc = await PDFDocument.create()
         const [page] = await doc.copyPages(source, [pageIndex])
         doc.addPage(page)
         const bytes = await doc.save()
-        const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/pdf' })
+        const blob = new Blob([bytes], { type: 'application/pdf' })
         outputs.push({
           id: crypto.randomUUID(),
           name: `${files[0].name.replace(/\.pdf$/i, '')}-page-${pageIndex + 1}.pdf`,
@@ -83,7 +86,7 @@ const module: ToolModule<PdfSplitOptions> = {
       const copiedPages = await doc.copyPages(source, pageIndexes)
       copiedPages.forEach((page) => doc.addPage(page))
       const bytes = await doc.save()
-      const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/pdf' })
+      const blob = new Blob([bytes], { type: 'application/pdf' })
       outputs.push({
         id: crypto.randomUUID(),
         name: `${files[0].name.replace(/\.pdf$/i, '')}-split.pdf`,

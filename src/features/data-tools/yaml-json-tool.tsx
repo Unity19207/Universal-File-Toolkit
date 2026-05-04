@@ -48,13 +48,29 @@ const module: ToolModule<YamlJsonOptions> = {
     helpers.onProgress({ phase: 'processing', value: 0.3, message: `Converting ${input.name}` })
     const text = await input.file.text()
 
+    // Fix #5: recursive deep key sort helper
+    function sortKeysDeep(value: unknown): unknown {
+      if (Array.isArray(value)) return value.map(sortKeysDeep)
+      if (value !== null && typeof value === 'object') {
+        return Object.fromEntries(
+          Object.entries(value as Record<string, unknown>)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => [k, sortKeysDeep(v)])
+        )
+      }
+      return value
+    }
+
     let output: string
     let extension: string
     let mimeType: string
 
     if (options.direction === 'yaml-to-json') {
-      const parsed = yaml.load(text) as unknown
-      output = JSON.stringify(parsed, options.sortKeys ? Object.keys(parsed as Record<string, unknown>).sort() : undefined, options.indent)
+      const parsed = yaml.load(text)
+      // Fix #5: guard null/undefined YAML (e.g. empty file)
+      if (parsed === null || parsed === undefined) throw new Error('YAML file is empty or contains only comments.')
+      const toSerialize = options.sortKeys ? sortKeysDeep(parsed) : parsed
+      output = JSON.stringify(toSerialize, null, options.indent)
       extension = 'json'
       mimeType = 'application/json'
     } else {

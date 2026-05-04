@@ -39,6 +39,8 @@ export function WorkspacePage() {
   const [copyLabel, setCopyLabel] = useState("Copy output");
   const progressRef = useRef<HTMLDivElement | null>(null);
   const outputRef = useRef<HTMLDivElement | null>(null);
+  // Fix #49/#50: store abort function so we can cancel the running job on re-run or unmount
+  const abortRef = useRef<(() => void) | null>(null);
 
   const isNoFileTool =
     tool?.requiresFile === false ||
@@ -53,6 +55,11 @@ export function WorkspacePage() {
       setOptions(loaded.defaultOptions);
     });
   }, [rememberTool, tool]);
+
+  // Fix #49: abort in-flight job when user navigates away
+  useEffect(() => {
+    return () => { abortRef.current?.(); };
+  }, []);
 
   const applyFiles = (
     acceptedFiles: File[],
@@ -133,11 +140,16 @@ export function WorkspacePage() {
 
   const runProcessing = async () => {
     if (!tool || options === null) return;
+    // Fix #49/#50: abort any in-flight job before starting a new one (prevents race conditions)
+    abortRef.current?.();
     progressRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
     });
-    await executeToolJob(tool, options);
+    const { promise, abort } = executeToolJob(tool, options);
+    abortRef.current = abort;
+    await promise;
+    abortRef.current = null;
     const updated = useToolkitStore.getState().sessions[tool.id]?.job;
     if (updated?.status === "succeeded")
       pushToast("Processing complete.", "positive");

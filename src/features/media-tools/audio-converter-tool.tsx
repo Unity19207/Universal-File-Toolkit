@@ -58,54 +58,60 @@ const module: ToolModule<AudioConverterOptions> = {
   OptionsComponent: AudioConverterOptionsComponent,
   async run(files, options, helpers) {
     const { FFmpeg } = await import('@ffmpeg/ffmpeg')
-    const { fetchFile, toBlobURL } = await import('@ffmpeg/util')
+    const { fetchFile } = await import('@ffmpeg/util')
 
     if (!globalFFmpeg) {
       helpers.onProgress({ phase: 'processing', value: 0.1, message: 'Loading audio processing engine (first time only, ~30MB)...' })
       globalFFmpeg = new FFmpeg()
-      
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm'
-      await globalFFmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
-      })
+
+      // Fix #39: load from local @ffmpeg/core package (offline-first, no CDN)
+      const ffmpegCoreUrl = new URL('@ffmpeg/core/dist/esm/ffmpeg-core.js', import.meta.url).toString()
+      const ffmpegWasmUrl = new URL('@ffmpeg/core/dist/esm/ffmpeg-core.wasm', import.meta.url).toString()
+      try {
+        await globalFFmpeg.load({ coreURL: ffmpegCoreUrl, wasmURL: ffmpegWasmUrl })
+      } catch (e) {
+        globalFFmpeg = null // Fix #40: reset so next run can retry cleanly
+        throw e
+      }
     }
 
     const ffmpeg = globalFFmpeg
     const outputs = []
 
-    for (const [i, input] of files.entries()) {
-      const inName = `input_${i}.${input.name.split('.').pop() || 'tmp'}`
-      const outName = `output_${i}.${options.outputFormat}`
+    // Fix #41: define handler once outside the loop so it can be properly unregistered
+    let currentFileIndex = 0
+    const onFFmpegProgress = ({ progress }: { progress: number }) => {
+      const baseVal = (currentFileIndex / files.length) * 0.9
+      helpers.onProgress({ phase: 'processing', value: baseVal + 0.1 + progress * 0.8, message: `Converting (${Math.round(progress * 100)}%)` })
+    }
+    ffmpeg.on('progress', onFFmpegProgress)
 
-      helpers.onProgress({ phase: 'processing', value: (i / files.length) * 0.9, message: `Reading ${input.name}` })
-      await ffmpeg.writeFile(inName, await fetchFile(input.file))
+    try {
+      for (const [i, input] of files.entries()) {
+        currentFileIndex = i
+        const inName = `input_${i}.${input.name.split('.').pop() || 'tmp'}`
+        const outName = `output_${i}.${options.outputFormat}`
 
-      helpers.onProgress({ phase: 'processing', value: (i / files.length) * 0.9 + 0.1, message: `Converting ${input.name}...` })
-      
-      ffmpeg.on('progress', ({ progress }: any) => {
-        // Approximate sub-progress
-        helpers.onProgress({ phase: 'processing', value: (i / files.length) * 0.9 + 0.1 + progress * 0.8, message: `Converting ${input.name} (${Math.round(progress * 100)}%)` })
-      })
+        helpers.onProgress({ phase: 'processing', value: (i / files.length) * 0.9, message: `Reading ${input.name}` })
+        await ffmpeg.writeFile(inName, await fetchFile(input.file))
 
-      let ffmpegArgs = ['-i', inName]
-      if (options.outputFormat !== 'wav') {
-        ffmpegArgs.push('-b:a', options.bitrate)
+        const ffmpegArgs = ['-i', inName]
+        if (options.outputFormat !== 'wav') ffmpegArgs.push('-b:a', options.bitrate)
+        ffmpegArgs.push(outName)
+        await ffmpeg.exec(ffmpegArgs)
+
+        const data = await ffmpeg.readFile(outName)
+        const blob = new Blob([((data as Uint8Array).buffer as unknown) as BlobPart], { type: mimeTypes[options.outputFormat] })
+
+        const finalName = `${input.name.replace(/\.[^.]+$/, '')}.${options.outputFormat}`
+        outputs.push({ id: crypto.randomUUID(), name: finalName, blob, type: mimeTypes[options.outputFormat], size: blob.size })
+
+        await ffmpeg.deleteFile(inName)
+        await ffmpeg.deleteFile(outName)
       }
-      ffmpegArgs.push(outName)
-
-      await ffmpeg.exec(ffmpegArgs)
-      
-      const data = await ffmpeg.readFile(outName)
-      const blob = new Blob([((data as Uint8Array).buffer as unknown) as BlobPart], { type: mimeTypes[options.outputFormat] })
-      
-      const finalName = `${input.name.replace(/\.[^.]+$/, '')}.${options.outputFormat}`
-      outputs.push({ id: crypto.randomUUID(), name: finalName, blob, type: mimeTypes[options.outputFormat], size: blob.size })
-      
-      // Cleanup virtual filesystem
-      ffmpeg.off('progress', () => {})
-      await ffmpeg.deleteFile(inName)
-      await ffmpeg.deleteFile(outName)
+    } finally {
+      // Fix #41: always unregister using the same reference
+      ffmpeg.off('progress', onFFmpegProgress)
     }
 
     helpers.onProgress({ phase: 'finalizing', value: 1, message: 'Done' })

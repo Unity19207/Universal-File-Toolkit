@@ -38,13 +38,20 @@ const module: ToolModule<VideoTrimmerOptions> = {
   OptionsComponent: VideoTrimmerOptionsComponent,
   async run(files, options, helpers) {
     const { FFmpeg } = await import('@ffmpeg/ffmpeg')
-    const { fetchFile, toBlobURL } = await import('@ffmpeg/util')
+    const { fetchFile } = await import('@ffmpeg/util')
 
     if (!globalFFmpeg) {
       helpers.onProgress({ phase: 'processing', value: 0.1, message: 'Loading video engine (~30MB)...' })
       globalFFmpeg = new FFmpeg()
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm'
-      await globalFFmpeg.load({ coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'), wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm') })
+      // Fix #39: load from local @ffmpeg/core package (offline-first, no CDN)
+      const ffmpegCoreUrl = new URL('@ffmpeg/core/dist/esm/ffmpeg-core.js', import.meta.url).toString()
+      const ffmpegWasmUrl = new URL('@ffmpeg/core/dist/esm/ffmpeg-core.wasm', import.meta.url).toString()
+      try {
+        await globalFFmpeg.load({ coreURL: ffmpegCoreUrl, wasmURL: ffmpegWasmUrl })
+      } catch (e) {
+        globalFFmpeg = null // Fix #40: reset so next run can retry cleanly
+        throw e
+      }
     }
 
     const ffmpeg = globalFFmpeg
@@ -61,6 +68,9 @@ const module: ToolModule<VideoTrimmerOptions> = {
       const args = []
       if (options.startTime) args.push('-ss', options.startTime)
       args.push('-i', inName)
+      // Fix #42: -to is an absolute timestamp when placed after -ss.
+      // When startTime is set, the effective end = endTime - startTime implicitly with -ss before -i.
+      // Document: End Time is the absolute position in the original file.
       if (options.endTime) args.push('-to', options.endTime)
 
       if (options.copyCodec) {

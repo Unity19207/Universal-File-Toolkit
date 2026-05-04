@@ -39,26 +39,32 @@ const module: ToolModule<JsonSchemaOptions> = {
     
     helpers.onProgress({ phase: 'processing', value: 0.2, message: 'Parsing schema tree...' })
     const text = await input.file.text()
-    
-    let schemaObj = {}
+
+    // Fix #22: parse data JSON first so its errors surface before schema compilation work
+    let dataObj = {}
+    try {
+      dataObj = JSON.parse(text)
+    } catch (e: any) {
+      throw new Error(`Data JSON syntax error: ${e.message}`)
+    }
+
+    let schemaObj: Record<string, unknown> = {}
     try {
       schemaObj = JSON.parse(options.schemaInput)
     } catch (e: any) {
       throw new Error(`Schema JSON syntax error: ${e.message}`)
     }
-    
+
+    // Fix #21: warn when schema is empty — it accepts everything and misleads user
+    if (Object.keys(schemaObj).length === 0) {
+      throw new Error('Schema is empty ({}) — all inputs will pass. Please provide a valid JSON Schema with at least one constraint.')
+    }
+
     const ajv = new Ajv({ strict: options.strict, allErrors: true })
     const validate = ajv.compile(schemaObj)
-    
+
     helpers.onProgress({ phase: 'processing', value: 0.5, message: 'Executing validation engine...' })
-    
-    let dataObj = {}
-    try {
-       dataObj = JSON.parse(text)
-    } catch (e: any) {
-       throw new Error(`Data JSON syntax error: ${e.message}`)
-    }
-    
+
     const valid = validate(dataObj)
     const result = { valid, errors: validate.errors || [] }
     const resultStr = JSON.stringify(result, null, 2)

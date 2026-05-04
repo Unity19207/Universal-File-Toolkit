@@ -66,7 +66,7 @@ const module: ToolModule<PdfSplitOptions> = {
         const [page] = await doc.copyPages(source, [pageIndex])
         doc.addPage(page)
         const bytes = await doc.save()
-        const blob = new Blob([bytes], { type: 'application/pdf' })
+        const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' })
         outputs.push({
           id: crypto.randomUUID(),
           name: `${files[0].name.replace(/\.pdf$/i, '')}-page-${pageIndex + 1}.pdf`,
@@ -86,7 +86,7 @@ const module: ToolModule<PdfSplitOptions> = {
       const copiedPages = await doc.copyPages(source, pageIndexes)
       copiedPages.forEach((page) => doc.addPage(page))
       const bytes = await doc.save()
-      const blob = new Blob([bytes], { type: 'application/pdf' })
+      const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' })
       outputs.push({
         id: crypto.randomUUID(),
         name: `${files[0].name.replace(/\.pdf$/i, '')}-split.pdf`,

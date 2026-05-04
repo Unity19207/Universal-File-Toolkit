@@ -237,7 +237,7 @@ const module: ToolModule<ImageResizerOptions> = {
         message: `Rendering ${item.name}`,
       })
 
-      const { blob, sizing } = await renderImage(item.file, options)
+      const { blob } = await renderImage(item.file, options)
       const stem = item.name.replace(/\.[^.]+$/, '')
       outputs.push({
         id: crypto.randomUUID(),

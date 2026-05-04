@@ -40,8 +40,12 @@ function normalizeLooseStructuredText(text: string) {
 }
 
 function tryParseLooseData(text: string) {
-  const normalized = normalizeLooseStructuredText(text.trim())
-  return JSON.parse(normalized) as unknown
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    const normalized = normalizeLooseStructuredText(text.trim())
+    return JSON.parse(normalized) as unknown
+  }
 }
 
 function flattenRecord(value: unknown, prefix = '', result: JsonRecord = {}) {
